@@ -112,9 +112,20 @@ class Show {
       case 'title':
         if (this.current) this.showOverlay(this.overlay && this.overlay.kind === 'title' ? null : 'title', TITLE_MS);
         return undefined;
+      case 'button':
+        this.log('[player] button down');
+        return this.sampler.handleButtonEvent(true);
       default:
         return undefined;
     }
+  }
+
+  // Only the button cares when a key comes back up: pieces can use how long it
+  // was held.
+  handleRelease(action) {
+    if (action !== 'button') return;
+    this.log('[player] button up');
+    this.sampler.handleButtonEvent(false);
   }
 
   toggleBlank() {

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Keyboard reader for player.js.
 
-Reads key presses from Linux input devices and prints one line per press:
+Reads keys from Linux input devices and prints one line per event:
 
-    key <code>    a Linux key code
+    key <code>    a key with this Linux key code was pressed
+    up <code>     and released, including when its keyboard is unplugged
     quit          Ctrl+C was pressed on a grabbed keyboard
     # <message>   a status message
 
@@ -27,6 +28,7 @@ import sys
 
 EVIOCGRAB = 0x40044590  # _IOW('E', 0x90, int)
 EV_KEY = 1
+KEY_UP = 0
 KEY_DOWN = 1
 KEY_C = 46
 CTRL_KEYS = {29, 97}
@@ -64,6 +66,7 @@ def main():
     die_with_parent()
     patterns = sys.argv[1].split(',')
     open_devices = {}  # fd -> device path
+    held = {}          # fd -> codes of the keys down on that device
     reported = set()   # problems already mentioned, so a retry stays quiet
     ctrl_down = 0
 
@@ -82,6 +85,7 @@ def main():
             except OSError as err:
                 say('# keyboard ready, but keys will also reach other programs (%s): %s' % (err.strerror, path))
             open_devices[fd] = path
+            held[fd] = set()
             reported.discard(path)
         if not open_devices and 'none' not in reported:
             say('# waiting for a keyboard (%s)' % ','.join(patterns))
@@ -103,6 +107,8 @@ def main():
                 continue
             except OSError:
                 say('# keyboard removed: %s' % open_devices.pop(fd))
+                for code in held.pop(fd):
+                    say('up %d' % code)
                 os.close(fd)
                 ctrl_down = 0
                 continue
@@ -114,7 +120,11 @@ def main():
                     ctrl_down += 1 if value == KEY_DOWN else -1 if value == 0 else 0
                     ctrl_down = max(ctrl_down, 0)
                 elif value == KEY_DOWN:
+                    held[fd].add(code)
                     say('quit' if code == KEY_C and ctrl_down else 'key %d' % code)
+                elif value == KEY_UP:
+                    held[fd].discard(code)
+                    say('up %d' % code)
 
 
 if __name__ == '__main__':

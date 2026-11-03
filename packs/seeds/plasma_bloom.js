@@ -3,6 +3,7 @@ id: 35feb5ba-985f-4f64-8dfb-13f3bec71b08
 title: Plasma Bloom
 created: 2026-07-07
 artist: seed exemplar (human + Claude)
+license: CC BY-SA 4.0, Jim Whitehead
 lineage: []
 influences: []
 rationale: |

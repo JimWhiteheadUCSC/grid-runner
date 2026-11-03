@@ -13,6 +13,7 @@ const { KEY_NAMES, LAYOUTS, DEFAULT_DEVICES, parseTerminal } = require('./keys')
 
 const PACKS_DIR = path.join(__dirname, '..', 'packs');
 const DEFAULT_AUTO_MINUTES = 5;
+const TERMINAL_TAP_MS = 150;
 
 const USAGE = `Plays generative art on a 64x64 LED panel, chosen from the keyboard.
 
@@ -97,9 +98,9 @@ function startKeyReader(devices, onKeyName, onQuit) {
     readline.createInterface({ input: child.stdout }).on('line', (line) => {
       if (line.startsWith('#')) console.log(`[keyboard] ${line.slice(1).trim()}`);
       else if (line === 'quit') onQuit();
-      else if (line.startsWith('key ')) {
-        const name = KEY_NAMES[line.slice(4)];
-        if (name) onKeyName(name);
+      else {
+        const [event, code] = line.split(' ');
+        if (KEY_NAMES[code]) onKeyName(KEY_NAMES[code], event === 'key');
       }
     });
     child.on('exit', (code) => {
@@ -123,8 +124,13 @@ function startTerminal(onKeyName, onQuit) {
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', (chunk) => {
     for (const name of parseTerminal(chunk)) {
-      if (name === 'quit') onQuit();
-      else onKeyName(name);
+      if (name === 'quit') {
+        onQuit();
+      } else {
+        // A terminal doesn't report releases, so every key is a quick tap.
+        onKeyName(name, true);
+        setTimeout(() => onKeyName(name, false), TERMINAL_TAP_MS);
+      }
     }
   });
 }
@@ -157,11 +163,12 @@ async function main() {
   let shutdown = () => {};
   const queued = [];
   const layout = LAYOUTS[opts.keyboard] || {};
-  const onKeyName = (name) => {
+  const onKeyName = (name, down) => {
     const action = layout[name];
     if (!action) return;
-    if (show) show.handleAction(action);
-    else queued.push(action);
+    const run = () => (down ? show.handleAction(action) : show.handleRelease(action));
+    if (show) run();
+    else queued.push(run);
   };
   const onQuit = () => shutdown();
 
@@ -201,7 +208,7 @@ async function main() {
   console.log(`[player] ${show.banks.length} bank(s); display ${opts.display}; keyboard ${opts.keyboard}${auto}`);
   startTerminal(onKeyName, onQuit);
   show.start();
-  queued.forEach((action) => show.handleAction(action));
+  queued.forEach((run) => run());
 
   let closing = false;
   shutdown = async () => {

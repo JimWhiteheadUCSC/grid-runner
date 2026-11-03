@@ -1,5 +1,6 @@
 {
   "name": "Seeds",
+  "license": "CC-BY-SA-4.0",
   "color": [200, 200, 200],
   "pieces": ["fireflies.js", "koi_pond.js", "plasma_bloom.js", "tide_pool_lantern.js"]
 }

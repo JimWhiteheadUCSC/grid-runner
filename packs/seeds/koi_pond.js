@@ -3,6 +3,7 @@ id: d38d8c81-dc33-47d8-8b39-3b580f5507cb
 title: Koi Pond
 created: 2026-07-07
 artist: seed exemplar (human + Claude)
+license: CC BY-SA 4.0, Jim Whitehead
 lineage:
   - id: 2bba4eb5-cd9b-4f2a-bb27-b5929bd67d43
     relation: variation

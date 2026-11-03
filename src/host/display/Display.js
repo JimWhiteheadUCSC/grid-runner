@@ -16,11 +16,9 @@ class Display {
     throw new Error('Display.pushFrame() not implemented');
   }
 
-  // Registers a handler(down: boolean) for button press/release events.
-  // No-op by default — only backends with an actual button source (the
-  // sim page's on-screen button) override this; MatrixDisplay doesn't,
-  // so input.button stays at its neutral default on real hardware until
-  // there's a physical button to wire up.
+  // Registers a handler(down: boolean) for button press/release events from
+  // the display itself. No-op by default — only the sim page has one, its
+  // on-screen button. The keyboard's button key works on every display.
   onButtonEvent(handler) {}
 
   async close() {}

@@ -86,14 +86,16 @@ the bank card:
 | Grid keys | Play that piece in the current bank |
 | ↑ ↓ or Page Up / Page Down | Previous / next bank |
 | ← → | Previous / next piece in the bank |
-| Space or Enter | Restart the piece |
+| Enter | The piece's button, for pieces that have one. Some react to holding it |
+| Space | Restart the piece |
 | T | Show the piece's title |
 | B | Blank the panel / bring it back |
 | - and = | Brightness down / up |
 | Ctrl+C | Quit |
 
 Keys go by their position, so the grid keeps its shape on any keyboard layout.
-In a terminal, keys go by the character typed, so the grid follows your layout.
+In a terminal, keys go by the character typed, so the grid follows your layout,
+and Enter can only tap the button. The simulator page has a button you can hold.
 
 Wireless keyboards usually work. If yours isn't found (Bluetooth keyboards often
 aren't), name it directly with `--keyboard-device /dev/input/event3`.
@@ -106,7 +108,7 @@ aren't), name it directly with `--keyboard-device /dev/input/event3`.
 |---|---|---|
 | 16 keys, row by row | a-p | Play that piece |
 | Knob 1: left / press / right | q r s | Brightness down / title / brightness up |
-| Knob 2: left / press / right | t u v | Previous piece / restart / next piece |
+| Knob 2: left / press / right | t u v | Previous piece / the piece's button / next piece |
 | Knob 3: left / press / right | w x y | Previous bank / blank / next bank |
 
 It looks for a device named `USB Composite Device`. For another pad, use
@@ -166,8 +168,9 @@ npm test
 
 ## License
 
-MIT, for the code and the four seed pieces: see [LICENSE](LICENSE). Packs and
-the fonts carry their own licenses.
+The code is MIT licensed: see [LICENSE](LICENSE). The four seed pieces are
+[CC BY-SA 4.0](packs/seeds/README.md). Packs and the fonts carry their own
+licenses.
 
 The panel driver isn't part of this repo. `npm install` fetches and builds it,
 and it is GPL-2 licensed, which matters if you distribute a built copy such as an

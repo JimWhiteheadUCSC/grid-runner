@@ -133,7 +133,8 @@ defaults — so reading `input` is always safe. Groups:
   detected. Defaults to silence.
 - `input.button` — `{ down, pressed, released, heldSeconds }`.
   `pressed`/`released` are one-frame edge flags. Defaults to
-  untouched.
+  untouched. Viewers press it with Enter, the middle knob of a macro
+  pad, or the simulator's on-screen button.
 - `input.clock` — `{ hour, minute, weekday, dayOfYear, daylight }`.
   `hour` is 0–24 as a float (14.5 = 2:30pm); `weekday` 0–6 starting
   Monday; `daylight` is 0–1 (0 = deep night, 1 = midday), computed

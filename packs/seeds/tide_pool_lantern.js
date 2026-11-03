@@ -3,6 +3,7 @@ id: 3a997c07-9327-4c3e-8b5c-db10ca3fcd8d
 title: Tide Pool Lantern
 created: 2026-07-10
 artist: seed exemplar (human + Claude)
+license: CC BY-SA 4.0, Jim Whitehead
 lineage: []
 influences: []
 rationale: |

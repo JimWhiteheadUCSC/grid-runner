@@ -11,6 +11,7 @@ const { scanPacks, loadBankFile } = require('../src/banks');
 const { KEY_NAMES, LAYOUTS, parseTerminal } = require('../src/keys');
 const { parseArgs } = require('../src/player');
 const { Show } = require('../src/show');
+const { ButtonState } = require('../src/host/input/button');
 
 const ROOT = path.join(__dirname, '..');
 const PACKS = path.join(ROOT, 'packs');
@@ -60,7 +61,7 @@ test('a qwerty layout covers the grid, the banks and the controls', () => {
     [...'1234qwerasdfzxcv'].map((k) => qwerty[k]),
     Array.from({ length: 16 }, (_, i) => `piece:${i}`)
   );
-  for (const [key, action] of Object.entries({ up: 'bank:prev', pageup: 'bank:prev', down: 'bank:next', pagedown: 'bank:next', left: 'piece:prev', right: 'piece:next', space: 'restart', b: 'blank', t: 'title', '-': 'brightness:down', '=': 'brightness:up' })) {
+  for (const [key, action] of Object.entries({ up: 'bank:prev', pageup: 'bank:prev', down: 'bank:next', pagedown: 'bank:next', left: 'piece:prev', right: 'piece:next', space: 'restart', enter: 'button', b: 'blank', t: 'title', '-': 'brightness:down', '=': 'brightness:up' })) {
     assert.strictEqual(qwerty[key], action, key);
   }
 });
@@ -68,7 +69,20 @@ test('a qwerty layout covers the grid, the banks and the controls', () => {
 test('the pad layout matches the macro pad', () => {
   const { pad } = LAYOUTS;
   assert.deepStrictEqual([...'abcdefghijklmnop'].map((k) => pad[k]), Array.from({ length: 16 }, (_, i) => `piece:${i}`));
-  assert.deepStrictEqual(['w', 'y', 'x', 't', 'v', 'u', 'q', 's', 'r'].map((k) => pad[k]), ['bank:prev', 'bank:next', 'blank', 'piece:prev', 'piece:next', 'restart', 'brightness:down', 'brightness:up', 'title']);
+  assert.deepStrictEqual(['w', 'y', 'x', 't', 'v', 'u', 'q', 's', 'r'].map((k) => pad[k]), ['bank:prev', 'bank:next', 'blank', 'piece:prev', 'piece:next', 'button', 'brightness:down', 'brightness:up', 'title']);
+});
+
+test('the button key reaches pieces, with its press, hold and release', async () => {
+  const button = new ButtonState();
+  const sampler = { sample: (dt) => ({ button: button.sample(dt) }), handleButtonEvent: (down) => button.handleEvent(down) };
+  const show = new Show({ display: { brightness: 100, pushFrame: quiet }, sampler, loadBanks: () => scanPacks(PACKS, quiet), log: quiet });
+  show.handleAction('button');
+  assert.deepStrictEqual(sampler.sample(0.5), { button: { down: true, pressed: true, released: false, heldSeconds: 0.5 } });
+  assert.deepStrictEqual(sampler.sample(0.5), { button: { down: true, pressed: false, released: false, heldSeconds: 1 } });
+  show.handleRelease('button');
+  assert.deepStrictEqual(sampler.sample(0.5), { button: { down: false, pressed: false, released: true, heldSeconds: 0 } });
+  show.handleRelease('piece:0'); // other keys' releases do nothing
+  await show.close();
 });
 
 test('every key a layout uses has a Linux key code', () => {
@@ -326,11 +340,11 @@ test('the whole player runs in the simulator and shuts down cleanly', async () =
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
   };
-  const press = (fd, code) => {
+  const press = (fd, code, value = 1) => {
     const b = Buffer.alloc(24);
     b.writeUInt16LE(1, 16);
     b.writeUInt16LE(code, 18);
-    b.writeInt32LE(1, 20);
+    b.writeInt32LE(value, 20);
     fs.writeSync(fd, b);
   };
 
@@ -343,6 +357,11 @@ test('the whole player runs in the simulator and shuts down cleanly', async () =
   await until('Plasma Bloom');
   press(fd, 108); // down arrow, which wraps round the one bank
   await until('bank 1/1');
+  press(fd, 28); // Enter, held
+  await until('button down');
+  assert.doesNotMatch(output, /button up/);
+  press(fd, 28, 0);
+  await until('button up');
 
   const exited = new Promise((resolve) => child.on('exit', (code, signal) => resolve({ code, signal })));
   child.kill('SIGTERM');
@@ -390,7 +409,7 @@ test('the key reader reports presses and quits when its pipe closes', async () =
     Buffer.concat([
       event(1, 2, 1), // '1' down
       event(1, 2, 2), // auto-repeat, ignored
-      event(1, 2, 0), // up, ignored
+      event(1, 2, 0), // up
       event(0, 0, 0), // not a key, ignored
       event(1, 103, 1), // up arrow
       event(1, 46, 1), // plain c
@@ -400,7 +419,7 @@ test('the key reader reports presses and quits when its pipe closes', async () =
     ])
   );
   await until(() => lines.includes('quit'));
-  assert.deepStrictEqual(lines.filter((l) => !l.startsWith('#')), ['key 2', 'key 103', 'key 46', 'quit']);
+  assert.deepStrictEqual(lines.filter((l) => !l.startsWith('#')), ['key 2', 'up 2', 'key 103', 'key 46', 'quit']);
 
   const exited = new Promise((resolve) => child.on('exit', resolve));
   child.stdin.end();
