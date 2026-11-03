@@ -1,0 +1,5 @@
+{
+  "name": "Seeds",
+  "color": [200, 200, 200],
+  "pieces": ["fireflies.js", "koi_pond.js", "plasma_bloom.js", "tide_pool_lantern.js"]
+}

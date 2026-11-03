@@ -1,0 +1,5 @@
+node_modules/
+__pycache__/
+# Packs you add stay out of this repo; only the seeds ship with it.
+packs/*
+!packs/seeds/

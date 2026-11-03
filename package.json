@@ -1,0 +1,28 @@
+{
+  "name": "grid-runner",
+  "version": "0.1.0",
+  "description": "Generative art for a 64x64 LED panel on a Raspberry Pi, flipped through from a keyboard.",
+  "license": "MIT",
+  "repository": "github:JimWhiteheadUCSC/grid-runner",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/player.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/player.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "fft.js": "^4.0.4",
+    "js-yaml": "^5.2.1",
+    "quickjs-emscripten": "^0.32.0",
+    "suncalc": "^2.0.0",
+    "ws": "^8.21.0"
+  },
+  "optionalDependencies": {
+    "rpi-led-matrix": "^1.15.0"
+  },
+  "allowScripts": {
+    "rpi-led-matrix@1.15.0": true
+  }
+}

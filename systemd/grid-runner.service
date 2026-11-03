@@ -1,0 +1,20 @@
+# Starts the player on the panel at boot. See README for how to install it.
+[Unit]
+Description=Grid Runner LED art player
+# No network dependency, so it also starts on a Pi that is offline.
+After=local-fs.target
+
+[Service]
+Type=simple
+# Root for GPIO. The panel driver gives it up after starting, and the keyboard
+# reader, started first, keeps access to the keyboard.
+User=root
+WorkingDirectory=__DIR__
+ExecStart=__NODE__ src/player.js --display matrix --keyboard qwerty --auto 5
+KillSignal=SIGTERM
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
