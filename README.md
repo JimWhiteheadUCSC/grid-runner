@@ -62,8 +62,8 @@ sudo node src/player.js --display matrix --auto
 ```
 
 `--auto` starts right away and moves to a new piece every 5 minutes, or as often
-as you say: `--auto 10`. It plays every piece in every pack once, in a random
-order, then shuffles again. Packs you add join in on the next shuffle.
+as you say: `--auto 10`. It plays every piece in every cart once, in a random
+order, then shuffles again. Carts you add join in on the next shuffle.
 
 It doesn't need a keyboard, but one still works if it's plugged in. A key press
 holds the current piece for another full interval, and `B` blanks the panel until
@@ -116,21 +116,21 @@ It looks for a device named `USB Composite Device`. For another pad, use
 
 ## Add artwork
 
-Artwork lives in `carts/`. It comes as a pack, which is a folder of pieces, or a
-multicart, which is a repo of several packs. Each pack becomes one or more banks
+Artwork lives in `carts/`. It comes as a cart, which is a folder of pieces, or a
+multicart, which is a repo of several carts. Each cart becomes one or more banks
 of up to 16 pieces.
 
 ```bash
 cd carts
-git clone <a multicart's or pack's repo>
+git clone <a cart's or multicart's repo>
 ```
 
 Or unzip a download there. New ones appear the next time you change banks, and
 they join whatever is already there.
-Pieces run in a sandbox with no access to your files or network, but a pack is
+Pieces run in a sandbox with no access to your files or network, but a cart is
 still someone else's code, so get carts from people you trust.
 
-To make your own, see [docs/PACKS.md](docs/PACKS.md).
+To make your own, see [docs/CARTS.md](docs/CARTS.md).
 
 ## Start at boot
 
@@ -160,7 +160,7 @@ to need:
 - `--audio arecord --audio-device plughw:1,0` uses a USB microphone. Without
   one, pieces that listen hear a built-in test signal.
 - `--banks my-banks.json` plays a hand-arranged set instead of `carts/`. See
-  [docs/PACKS.md](docs/PACKS.md).
+  [docs/CARTS.md](docs/CARTS.md).
 
 ## Tests
 

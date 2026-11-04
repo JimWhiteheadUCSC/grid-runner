@@ -1,10 +1,10 @@
-# Making a pack
+# Making a cart
 
-A pack is a folder of pieces. Put it in `carts/`, and it appears in the player.
+A cart is a folder of pieces. Put it in `carts/`, and it appears in the player.
 
 ```
-carts/my-pack/
-  pack.json        optional
+carts/my-cart/
+  cart.json        optional
   first-piece.js
   second-piece.js
 ```
@@ -17,13 +17,13 @@ any file whose name starts with a dot.
 To try a piece without a panel, run `npm start` and open
 http://localhost:8080.
 
-## pack.json
+## cart.json
 
 Every field is optional.
 
 ```json
 {
-  "name": "My Pack",
+  "name": "My Cart",
   "color": [255, 170, 60],
   "pieces": ["second-piece.js", "first-piece.js"]
 }
@@ -35,10 +35,10 @@ Every field is optional.
 | `color` | The bank card's colour, as `[red, green, blue]` from 0 to 255 | A colour from the built-in palette |
 | `pieces` | Which pieces to play, in order | Every piece, by filename |
 
-Listed pieces must be inside the pack. A pack with more than 16 pieces is split
-into banks named "My Pack 1-16", "My Pack 17-32" and so on.
+Listed pieces must be inside the cart. A cart with more than 16 pieces is split
+into banks named "My Cart 1-16", "My Cart 17-32" and so on.
 
-## Sharing a pack
+## Sharing a cart
 
 Put the folder in its own git repository or a zip file, and say in its README
 who made it and what license it's under. People install it with:
@@ -50,30 +50,30 @@ git clone <your repo>
 
 ## Multicarts
 
-A multicart is one repository holding several packs. It installs like a pack,
-and each pack inside becomes its own bank or banks.
+A multicart is one repository holding several carts. It installs like a cart,
+and each cart inside becomes its own bank or banks.
 
 ```
 carts/my-multicart/
-  cart.json
-  first-pack/
-  second-pack/
+  multicart.json
+  first-cart/
+  second-cart/
 ```
 
-`cart.json` lists the packs in the order they play, and any folder it doesn't
+`multicart.json` lists the carts in the order they play, and any folder it doesn't
 list is left out:
 
 ```json
 {
   "name": "My Multicart",
-  "packs": ["first-pack", "second-pack"]
+  "carts": ["first-cart", "second-cart"]
 }
 ```
 
 ## Arranging your own banks
 
-Packs fill banks automatically. To choose exactly which piece goes on which key
-across packs, write a bank file and run the player with `--banks my-banks.json`:
+Carts fill banks automatically. To choose exactly which piece goes on which key
+across carts, write a bank file and run the player with `--banks my-banks.json`:
 
 ```json
 {
@@ -84,7 +84,7 @@ across packs, write a bank file and run the player with `--banks my-banks.json`:
       "pieces": [
         { "file": "carts/seeds/koi_pond.js", "title": "Koi Pond" },
         null,
-        "carts/my-pack/first-piece.js"
+        "carts/my-cart/first-piece.js"
       ]
     }
   ]

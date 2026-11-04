@@ -1,6 +1,6 @@
 'use strict';
 
-// Where banks come from: every multicart and pack under a folder, or one hand-written bank
+// Where banks come from: every cart and multicart under a folder, or one hand-written bank
 // file. A bank is up to 16 pieces, one per key.
 
 const fs = require('fs');
@@ -8,7 +8,7 @@ const path = require('path');
 const { parsePieceInfo } = require('./pieceInfo');
 
 const BANK_SIZE = 16;
-const FIRST_PACK = 'seeds';
+const FIRST_CART = 'seeds';
 const PALETTE = [
   [255, 170, 60],
   [255, 110, 150],
@@ -30,29 +30,29 @@ function pieceFrom(file) {
   return { file, title: parsePieceInfo(source, file).title };
 }
 
-function readManifest(packDir) {
-  const file = path.join(packDir, 'pack.json');
+function readManifest(cartDir) {
+  const file = path.join(cartDir, 'cart.json');
   if (!fs.existsSync(file)) return {};
   const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) throw new Error('pack.json must be an object');
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) throw new Error('cart.json must be an object');
   return manifest;
 }
 
-// Lists a pack's piece files. A pack comes from someone else, so a piece listed
-// in its manifest must resolve to a file inside the pack.
-function piecesIn(packDir, manifest) {
-  const realPack = fs.realpathSync(packDir);
+// Lists a cart's piece files. A cart comes from someone else, so a piece listed
+// in its manifest must resolve to a file inside the cart.
+function piecesIn(cartDir, manifest) {
+  const realCart = fs.realpathSync(cartDir);
   let names;
   if (Array.isArray(manifest.pieces)) {
     names = manifest.pieces;
   } else {
-    names = fs.readdirSync(packDir).filter((f) => f.endsWith('.js') && !f.startsWith('.')).sort();
+    names = fs.readdirSync(cartDir).filter((f) => f.endsWith('.js') && !f.startsWith('.')).sort();
   }
   const pieces = [];
   for (const name of names) {
-    if (typeof name !== 'string') throw new Error('pack.json pieces must be filenames');
-    const real = fs.realpathSync(path.join(packDir, name));
-    if (!real.startsWith(realPack + path.sep)) throw new Error(`${name} is outside the pack`);
+    if (typeof name !== 'string') throw new Error('cart.json pieces must be filenames');
+    const real = fs.realpathSync(path.join(cartDir, name));
+    if (!real.startsWith(realCart + path.sep)) throw new Error(`${name} is outside the cart`);
     const piece = pieceFrom(real);
     if (piece) pieces.push(piece);
   }
@@ -73,51 +73,51 @@ function fillBank(bank) {
   return { ...bank, pieces: Array.from({ length: BANK_SIZE }, (_, i) => bank.pieces[i] || null) };
 }
 
-// A multicart is a folder of packs, played in the order its cart.json lists
-// them. Returns the pack folders' names, or null if this folder isn't a
-// multicart. Like a pack's pieces, a multicart's packs must be inside it.
-function packsInCart(dir) {
-  const file = path.join(dir, 'cart.json');
+// A multicart is a folder of carts, played in the order its multicart.json lists
+// them. Returns the cart folders' names, or null if this folder isn't a
+// multicart. Like a cart's pieces, a multicart's carts must be inside it.
+function cartsInMulticart(dir) {
+  const file = path.join(dir, 'multicart.json');
   if (!fs.existsSync(file)) return null;
-  const cart = JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!cart || !Array.isArray(cart.packs)) throw new Error('cart.json must list its packs');
-  const realCart = fs.realpathSync(dir);
-  for (const name of cart.packs) {
-    if (typeof name !== 'string') throw new Error('cart.json packs must be folder names');
-    if (!fs.realpathSync(path.join(dir, name)).startsWith(realCart + path.sep)) throw new Error(`${name} is outside the multicart`);
+  const multicart = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!multicart || !Array.isArray(multicart.carts)) throw new Error('multicart.json must list its carts');
+  const realMulticart = fs.realpathSync(dir);
+  for (const name of multicart.carts) {
+    if (typeof name !== 'string') throw new Error('multicart.json carts must be folder names');
+    if (!fs.realpathSync(path.join(dir, name)).startsWith(realMulticart + path.sep)) throw new Error(`${name} is outside the multicart`);
   }
-  return cart.packs;
+  return multicart.carts;
 }
 
-// One broken pack shouldn't take the others down with it, so its problem is
+// One broken cart shouldn't take the others down with it, so its problem is
 // reported and the scan carries on.
 function scanCarts(cartsDir, log = console.log) {
   const dirs = fs
     .readdirSync(cartsDir, { withFileTypes: true })
     .filter((e) => !e.name.startsWith('.') && fs.statSync(path.join(cartsDir, e.name)).isDirectory())
     .map((e) => e.name)
-    .sort((a, b) => (a === FIRST_PACK ? -1 : b === FIRST_PACK ? 1 : a.localeCompare(b)));
-  const packs = [];
+    .sort((a, b) => (a === FIRST_CART ? -1 : b === FIRST_CART ? 1 : a.localeCompare(b)));
+  const carts = [];
   for (const dir of dirs) {
     try {
-      const inCart = packsInCart(path.join(cartsDir, dir));
-      packs.push(...(inCart ? inCart.map((name) => path.join(dir, name)) : [dir]));
+      const inMulticart = cartsInMulticart(path.join(cartsDir, dir));
+      carts.push(...(inMulticart ? inMulticart.map((name) => path.join(dir, name)) : [dir]));
     } catch (err) {
       log(`[player] skipping multicart '${dir}': ${err.message}`);
     }
   }
   const banks = [];
-  packs.forEach((dir, i) => {
-    const packDir = path.join(cartsDir, dir);
+  carts.forEach((dir, i) => {
+    const cartDir = path.join(cartsDir, dir);
     try {
-      const manifest = readManifest(packDir);
+      const manifest = readManifest(cartDir);
       const name = typeof manifest.name === 'string' && manifest.name.trim() ? manifest.name : path.basename(dir);
       const color = isValidColor(manifest.color) ? manifest.color : PALETTE[i % PALETTE.length];
-      const pieces = piecesIn(packDir, manifest);
+      const pieces = piecesIn(cartDir, manifest);
       if (pieces.length) banks.push(...banksOf(name, color, pieces));
-      else log(`[player] pack '${dir}' has no pieces`);
+      else log(`[player] cart '${dir}' has no pieces`);
     } catch (err) {
-      log(`[player] skipping pack '${dir}': ${err.message}`);
+      log(`[player] skipping cart '${dir}': ${err.message}`);
     }
   });
   if (!banks.length) throw new Error(`no pieces found in ${cartsDir}`);

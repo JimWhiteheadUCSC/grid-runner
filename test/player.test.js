@@ -21,11 +21,11 @@ test.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 const quiet = () => {};
 const piece = (title) => `/*@vfx\nid: 00000000-0000-4000-8000-000000000000\ntitle: ${title}\n@vfx*/\nfunction pixel(x, y, t) { return 0; }\n`;
 
-function makePack(name, files, manifest) {
+function makeCart(name, files, manifest) {
   const dir = path.join(tmp, name);
   fs.mkdirSync(dir, { recursive: true });
   for (const [file, text] of Object.entries(files)) fs.writeFileSync(path.join(dir, file), text);
-  if (manifest) fs.writeFileSync(path.join(dir, 'pack.json'), JSON.stringify(manifest));
+  if (manifest) fs.writeFileSync(path.join(dir, 'cart.json'), JSON.stringify(manifest));
   return dir;
 }
 
@@ -102,13 +102,13 @@ test('the default panel mapping works without a hardware jumper', () => {
   assert.throws(() => parseArgs(['node', 'player', '--nope', '1']), /bad argument/);
 });
 
-test('packs: order, colours, bank splitting, and what counts as a piece', () => {
+test('carts: order, colours, bank splitting, and what counts as a piece', () => {
   const dir = path.join(tmp, 'many');
   const files = { 'not-a-piece.js': 'module.exports = 1;\n', '.attempt-1.js': piece('Hidden') };
   for (let i = 0; i < 20; i++) files[`p${String(i).padStart(2, '0')}.js`] = piece(`P${i}`);
-  makePack('many/zebra', files, { name: 'Zebra', color: [1, 2, 3] });
-  makePack('many/alpha', { 'a.js': piece('A') });
-  makePack('many/seeds', { 's.js': piece('S') });
+  makeCart('many/zebra', files, { name: 'Zebra', color: [1, 2, 3] });
+  makeCart('many/alpha', { 'a.js': piece('A') });
+  makeCart('many/seeds', { 's.js': piece('S') });
   fs.mkdirSync(path.join(dir, '.git'));
 
   const banks = scanCarts(dir, quiet);
@@ -118,14 +118,14 @@ test('packs: order, colours, bank splitting, and what counts as a piece', () => 
   assert.strictEqual(banks[3].pieces.filter(Boolean).length, 4);
 });
 
-test('a multicart plays its packs in order, and cannot reach outside itself', () => {
-  makePack('carts/cart/zebra', { 'z.js': piece('Z') }, { name: 'Zebra' });
-  makePack('carts/cart/alpha', { 'a.js': piece('A') });
-  makePack('carts/cart/unlisted', { 'u.js': piece('U') });
-  fs.writeFileSync(path.join(tmp, 'carts/cart/cart.json'), JSON.stringify({ name: 'Cart', packs: ['zebra', 'alpha'] }));
-  makePack('carts/escape', { 'cart.json': JSON.stringify({ packs: ['../cart/zebra'] }) });
-  makePack('carts/broken', { 'cart.json': '{ nope' });
-  makePack('carts/plain', { 'p.js': piece('P') });
+test('a multicart plays its carts in order, and cannot reach outside itself', () => {
+  makeCart('carts/cart/zebra', { 'z.js': piece('Z') }, { name: 'Zebra' });
+  makeCart('carts/cart/alpha', { 'a.js': piece('A') });
+  makeCart('carts/cart/unlisted', { 'u.js': piece('U') });
+  fs.writeFileSync(path.join(tmp, 'carts/cart/multicart.json'), JSON.stringify({ name: 'Cart', carts: ['zebra', 'alpha'] }));
+  makeCart('carts/escape', { 'multicart.json': JSON.stringify({ carts: ['../cart/zebra'] }) });
+  makeCart('carts/broken', { 'multicart.json': '{ nope' });
+  makeCart('carts/plain', { 'p.js': piece('P') });
 
   const messages = [];
   const banks = scanCarts(path.join(tmp, 'carts'), (m) => messages.push(m));
@@ -133,19 +133,19 @@ test('a multicart plays its packs in order, and cannot reach outside itself', ()
   assert.strictEqual(messages.filter((m) => m.includes('skipping multicart')).length, 2);
 });
 
-test('a pack cannot reach outside itself, and a broken pack spares the others', () => {
+test('a cart cannot reach outside itself, and a broken cart spares the others', () => {
   const dir = path.join(tmp, 'hostile');
   fs.writeFileSync(path.join(tmp, 'secret.js'), piece('Secret'));
-  makePack('hostile/traversal', { 'ok.js': piece('OK') }, { pieces: ['ok.js', '../../secret.js'] });
-  makePack('hostile/link', {});
+  makeCart('hostile/traversal', { 'ok.js': piece('OK') }, { pieces: ['ok.js', '../../secret.js'] });
+  makeCart('hostile/link', {});
   fs.symlinkSync(path.join(tmp, 'secret.js'), path.join(dir, 'link', 'link.js'));
-  makePack('hostile/broken', { 'pack.json': '{ nope' });
-  makePack('hostile/good', { 'good.js': piece('Good') });
+  makeCart('hostile/broken', { 'cart.json': '{ nope' });
+  makeCart('hostile/good', { 'good.js': piece('Good') });
 
   const messages = [];
   const banks = scanCarts(dir, (m) => messages.push(m));
   assert.deepStrictEqual(banks.map((b) => b.name), ['good']);
-  assert.strictEqual(messages.filter((m) => m.includes('skipping pack')).length, 3);
+  assert.strictEqual(messages.filter((m) => m.includes('skipping cart')).length, 3);
 });
 
 test('no pieces at all is a clear error', () => {
@@ -154,7 +154,7 @@ test('no pieces at all is a clear error', () => {
 });
 
 test('a bank file keeps its keys in place', () => {
-  const dir = makePack('bankfile', { 'x.js': piece('X') });
+  const dir = makeCart('bankfile', { 'x.js': piece('X') });
   const file = path.join(dir, 'banks.json');
   fs.writeFileSync(file, JSON.stringify({ banks: [{ name: 'Mine', pieces: [null, { file: 'x.js', title: 'Ex' }, 'x.js'] }] }));
   const [bank] = loadBankFile(file);
@@ -232,7 +232,7 @@ test('a new order never repeats the piece already showing', () => {
   show.current = null;
 });
 
-test('unattended play finds new packs and skips removed pieces', () => {
+test('unattended play finds new carts and skips removed pieces', () => {
   const seeds = scanCarts(CARTS, quiet);
   let current = seeds;
   const display = { brightness: 100, pushFrame: quiet };
@@ -241,7 +241,7 @@ test('unattended play finds new packs and skips removed pieces', () => {
   show.deck = ['/gone/a.js', seeds[0].pieces[2].file, '/gone/b.js'];
   assert.strictEqual(show.nextAutoPiece().key, 2, 'the removed piece was not skipped');
 
-  // Once the deck runs out, the next order includes the pack added meanwhile.
+  // Once the deck runs out, the next order includes the cart added meanwhile.
   const added = { file: '/new/piece.js', title: 'New' };
   current = [...seeds, { name: 'New', color: [1, 1, 1], pieces: [added] }];
   show.banks = current;

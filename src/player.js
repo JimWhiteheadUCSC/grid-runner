@@ -25,7 +25,7 @@ Options:
                                (default ${DEFAULT_AUTO_MINUTES}); keys still work
   --keyboard qwerty|pad|none   key layout (default qwerty; see README)
   --keyboard-device <globs>    input devices to read, comma-separated
-  --carts <dir>                folder of multicarts and packs (default: carts/)
+  --carts <dir>                folder of carts and multicarts (default: carts/)
   --banks <file>               play a hand-written bank file instead of carts
   --titles                     show each piece's title when it starts
   --brightness 10-100          starting brightness (default 100)

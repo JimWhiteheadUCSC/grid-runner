@@ -64,7 +64,7 @@ function safeDispose(runtime) {
 }
 
 class Show {
-  // loadBanks: () => banks. It runs again on each bank change, so packs added
+  // loadBanks: () => banks. It runs again on each bank change, so carts added
   // while the player is running appear without a restart.
   // autoMinutes: move to a new piece this often, with nobody at the keyboard.
   constructor({ display, sampler, loadBanks, wallLabelDir = null, titles = false, autoMinutes = null, log = console.log }) {
@@ -175,7 +175,7 @@ class Show {
 
   // ---- unattended play -----------------------------------------------
 
-  // Starts the next piece. Banks are read again first, so packs added while the
+  // Starts the next piece. Banks are read again first, so carts added while the
   // player is running join in.
   advance() {
     this.autoAt = Date.now() + this.autoMs;
