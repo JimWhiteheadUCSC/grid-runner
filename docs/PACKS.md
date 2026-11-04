@@ -1,16 +1,16 @@
 # Making a pack
 
-A pack is a folder of pieces. Put it in `packs/`, and it appears in the player.
+A pack is a folder of pieces. Put it in `carts/`, and it appears in the player.
 
 ```
-packs/my-pack/
+carts/my-pack/
   pack.json        optional
   first-piece.js
   second-piece.js
 ```
 
 A piece is a single JavaScript file that follows the
-[piece contract](VFX_API.md). The four pieces in `packs/seeds/` are worked
+[piece contract](VFX_API.md). The four pieces in `carts/seeds/` are worked
 examples. A `.js` file without the `/*@vfx ... @vfx*/` header is ignored, as is
 any file whose name starts with a dot.
 
@@ -44,7 +44,7 @@ Put the folder in its own git repository or a zip file, and say in its README
 who made it and what license it's under. People install it with:
 
 ```bash
-cd packs
+cd carts
 git clone <your repo>
 ```
 
@@ -54,7 +54,7 @@ A multicart is one repository holding several packs. It installs like a pack,
 and each pack inside becomes its own bank or banks.
 
 ```
-packs/my-multicart/
+carts/my-multicart/
   cart.json
   first-pack/
   second-pack/
@@ -82,9 +82,9 @@ across packs, write a bank file and run the player with `--banks my-banks.json`:
       "name": "Favourites",
       "color": [255, 110, 150],
       "pieces": [
-        { "file": "packs/seeds/koi_pond.js", "title": "Koi Pond" },
+        { "file": "carts/seeds/koi_pond.js", "title": "Koi Pond" },
         null,
-        "packs/my-pack/first-piece.js"
+        "carts/my-pack/first-piece.js"
       ]
     }
   ]

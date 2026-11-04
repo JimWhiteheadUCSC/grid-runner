@@ -8,10 +8,10 @@ const { spawn } = require('child_process');
 const { createDisplay } = require('./host/display');
 const { createInputSampler } = require('./host/input');
 const { Show } = require('./show');
-const { scanPacks, loadBankFile } = require('./banks');
+const { scanCarts, loadBankFile } = require('./banks');
 const { KEY_NAMES, LAYOUTS, DEFAULT_DEVICES, parseTerminal } = require('./keys');
 
-const PACKS_DIR = path.join(__dirname, '..', 'packs');
+const CARTS_DIR = path.join(__dirname, '..', 'carts');
 const DEFAULT_AUTO_MINUTES = 5;
 const TERMINAL_TAP_MS = 150;
 
@@ -25,8 +25,8 @@ Options:
                                (default ${DEFAULT_AUTO_MINUTES}); keys still work
   --keyboard qwerty|pad|none   key layout (default qwerty; see README)
   --keyboard-device <globs>    input devices to read, comma-separated
-  --packs <dir>                folder of packs (default: packs/)
-  --banks <file>               play a hand-written bank file instead of packs
+  --carts <dir>                folder of multicarts and packs (default: carts/)
+  --banks <file>               play a hand-written bank file instead of carts
   --titles                     show each piece's title when it starts
   --brightness 10-100          starting brightness (default 100)
   --gpio-mapping <name>        panel wiring (default adafruit-hat; use
@@ -42,7 +42,7 @@ function parseArgs(argv) {
   const opts = {
     keyboard: 'qwerty',
     keyboardDevice: null,
-    packs: PACKS_DIR,
+    carts: CARTS_DIR,
     banks: null,
     display: 'sim',
     port: 8080,
@@ -198,11 +198,11 @@ async function main() {
   display.onButtonEvent((down) => sampler.handleButtonEvent(down));
 
   checkStillReadable([
-    opts.banks || opts.packs,
+    opts.banks || opts.carts,
     require.resolve('quickjs-emscripten'),
   ]);
 
-  const loadBanks = opts.banks ? () => loadBankFile(path.resolve(opts.banks)) : () => scanPacks(opts.packs);
+  const loadBanks = opts.banks ? () => loadBankFile(path.resolve(opts.banks)) : () => scanCarts(opts.carts);
   show = new Show({ display, sampler, loadBanks, wallLabelDir: opts.wallLabel, titles: opts.titles, autoMinutes: opts.auto });
   const auto = opts.auto ? `; new piece every ${opts.auto} min` : '';
   console.log(`[player] ${show.banks.length} bank(s); display ${opts.display}; keyboard ${opts.keyboard}${auto}`);

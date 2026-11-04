@@ -7,14 +7,14 @@ const os = require('os');
 const path = require('path');
 const { spawn, spawnSync, execFileSync } = require('child_process');
 const readline = require('readline');
-const { scanPacks, loadBankFile } = require('../src/banks');
+const { scanCarts, loadBankFile } = require('../src/banks');
 const { KEY_NAMES, LAYOUTS, parseTerminal } = require('../src/keys');
 const { parseArgs } = require('../src/player');
 const { Show } = require('../src/show');
 const { ButtonState } = require('../src/host/input/button');
 
 const ROOT = path.join(__dirname, '..');
-const PACKS = path.join(ROOT, 'packs');
+const CARTS = path.join(ROOT, 'carts');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'player-test-'));
 test.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
@@ -29,7 +29,7 @@ function makePack(name, files, manifest) {
   return dir;
 }
 
-function fakeShow(banks = scanPacks(PACKS, quiet)) {
+function fakeShow(banks = scanCarts(CARTS, quiet)) {
   const frames = [];
   const sampler = { sample: () => ({}) };
   const display = { brightness: 100, pushFrame: (f) => frames.push(Uint8Array.from(f)) };
@@ -37,7 +37,7 @@ function fakeShow(banks = scanPacks(PACKS, quiet)) {
 }
 
 test('the player ships with exactly the four seed pieces', () => {
-  const banks = scanPacks(PACKS, quiet);
+  const banks = scanCarts(CARTS, quiet);
   assert.strictEqual(banks.length, 1);
   assert.deepStrictEqual(banks[0].pieces.filter(Boolean).map((p) => p.title), ['Fireflies', 'Koi Pond', 'Plasma Bloom', 'Tide Pool Lantern']);
   assert.strictEqual(banks[0].pieces.length, 16);
@@ -75,7 +75,7 @@ test('the pad layout matches the macro pad', () => {
 test('the button key reaches pieces, with its press, hold and release', async () => {
   const button = new ButtonState();
   const sampler = { sample: (dt) => ({ button: button.sample(dt) }), handleButtonEvent: (down) => button.handleEvent(down) };
-  const show = new Show({ display: { brightness: 100, pushFrame: quiet }, sampler, loadBanks: () => scanPacks(PACKS, quiet), log: quiet });
+  const show = new Show({ display: { brightness: 100, pushFrame: quiet }, sampler, loadBanks: () => scanCarts(CARTS, quiet), log: quiet });
   show.handleAction('button');
   assert.deepStrictEqual(sampler.sample(0.5), { button: { down: true, pressed: true, released: false, heldSeconds: 0.5 } });
   assert.deepStrictEqual(sampler.sample(0.5), { button: { down: true, pressed: false, released: false, heldSeconds: 1 } });
@@ -111,7 +111,7 @@ test('packs: order, colours, bank splitting, and what counts as a piece', () => 
   makePack('many/seeds', { 's.js': piece('S') });
   fs.mkdirSync(path.join(dir, '.git'));
 
-  const banks = scanPacks(dir, quiet);
+  const banks = scanCarts(dir, quiet);
   assert.deepStrictEqual(banks.map((b) => b.name), ['seeds', 'alpha', 'Zebra 1-16', 'Zebra 17-20']);
   assert.deepStrictEqual(banks[2].color, [1, 2, 3]);
   assert.strictEqual(banks[2].pieces.filter(Boolean).length, 16);
@@ -128,7 +128,7 @@ test('a multicart plays its packs in order, and cannot reach outside itself', ()
   makePack('carts/plain', { 'p.js': piece('P') });
 
   const messages = [];
-  const banks = scanPacks(path.join(tmp, 'carts'), (m) => messages.push(m));
+  const banks = scanCarts(path.join(tmp, 'carts'), (m) => messages.push(m));
   assert.deepStrictEqual(banks.map((b) => b.name), ['Zebra', 'alpha', 'plain']);
   assert.strictEqual(messages.filter((m) => m.includes('skipping multicart')).length, 2);
 });
@@ -143,14 +143,14 @@ test('a pack cannot reach outside itself, and a broken pack spares the others', 
   makePack('hostile/good', { 'good.js': piece('Good') });
 
   const messages = [];
-  const banks = scanPacks(dir, (m) => messages.push(m));
+  const banks = scanCarts(dir, (m) => messages.push(m));
   assert.deepStrictEqual(banks.map((b) => b.name), ['good']);
   assert.strictEqual(messages.filter((m) => m.includes('skipping pack')).length, 3);
 });
 
 test('no pieces at all is a clear error', () => {
   fs.mkdirSync(path.join(tmp, 'empty'));
-  assert.throws(() => scanPacks(path.join(tmp, 'empty'), quiet), /no pieces found/);
+  assert.throws(() => scanCarts(path.join(tmp, 'empty'), quiet), /no pieces found/);
 });
 
 test('a bank file keeps its keys in place', () => {
@@ -164,7 +164,7 @@ test('a bank file keeps its keys in place', () => {
 });
 
 test('stepping survives banks changing underneath the show', async () => {
-  const banks = scanPacks(PACKS, quiet);
+  const banks = scanCarts(CARTS, quiet);
   const two = [...banks, { ...banks[0], name: 'Other' }];
   let current = two;
   const display = { brightness: 100, pushFrame: quiet };
@@ -183,7 +183,7 @@ test('stepping survives banks changing underneath the show', async () => {
   await show.close();
 });
 
-function autoShow(banks = scanPacks(PACKS, quiet)) {
+function autoShow(banks = scanCarts(CARTS, quiet)) {
   const display = { brightness: 100, pushFrame: quiet };
   return new Show({ display, sampler: { sample: () => ({}) }, loadBanks: () => banks, autoMinutes: 5, log: quiet });
 }
@@ -233,7 +233,7 @@ test('a new order never repeats the piece already showing', () => {
 });
 
 test('unattended play finds new packs and skips removed pieces', () => {
-  const seeds = scanPacks(PACKS, quiet);
+  const seeds = scanCarts(CARTS, quiet);
   let current = seeds;
   const display = { brightness: 100, pushFrame: quiet };
   const show = new Show({ display, sampler: { sample: () => ({}) }, loadBanks: () => current, autoMinutes: 5, log: quiet });

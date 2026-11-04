@@ -1,5 +1,6 @@
 node_modules/
 __pycache__/
-# Packs you add stay out of this repo; only the seeds ship with it.
-packs/*
-!packs/seeds/
+# Carts you add stay out of this repo; only the seeds and the README ship with it.
+carts/*
+!carts/seeds/
+!carts/README.md

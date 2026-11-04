@@ -2,7 +2,7 @@
 
 Got an LED panel sitting in a drawer? Grid Runner turns a Raspberry Pi and a
 64×64 HUB75 panel into a small generative art player. Flip through pieces from
-a keyboard, or leave it to play by itself, and add more by dropping in packs of
+a keyboard, or leave it to play by itself, and add more by dropping in carts of
 artwork.
 
 It comes with four pieces. Each one is a small JavaScript program that runs in
@@ -116,18 +116,19 @@ It looks for a device named `USB Composite Device`. For another pad, use
 
 ## Add artwork
 
-A pack is a folder of pieces inside `packs/`. Each pack becomes one or more
-banks of up to 16 pieces.
+Artwork lives in `carts/`. It comes as a pack, which is a folder of pieces, or a
+multicart, which is a repo of several packs. Each pack becomes one or more banks
+of up to 16 pieces.
 
 ```bash
-cd packs
-git clone <a pack's repo>
+cd carts
+git clone <a multicart's or pack's repo>
 ```
 
-Or unzip a download there. New packs appear the next time you change banks. A
-multicart is a repo of several packs, and it installs the same way.
+Or unzip a download there. New ones appear the next time you change banks, and
+they join whatever is already there.
 Pieces run in a sandbox with no access to your files or network, but a pack is
-still someone else's code, so get packs from people you trust.
+still someone else's code, so get carts from people you trust.
 
 To make your own, see [docs/PACKS.md](docs/PACKS.md).
 
@@ -158,7 +159,7 @@ to need:
   [Open-Meteo](https://open-meteo.com), and pieces carry on without it offline.
 - `--audio arecord --audio-device plughw:1,0` uses a USB microphone. Without
   one, pieces that listen hear a built-in test signal.
-- `--banks my-banks.json` plays a hand-arranged set instead of the packs. See
+- `--banks my-banks.json` plays a hand-arranged set instead of `carts/`. See
   [docs/PACKS.md](docs/PACKS.md).
 
 ## Tests
@@ -170,7 +171,7 @@ npm test
 ## License
 
 The code is MIT licensed: see [LICENSE](LICENSE). The four seed pieces are
-[CC BY-SA 4.0](packs/seeds/README.md). Packs and the fonts carry their own
+[CC BY-SA 4.0](carts/seeds/README.md). Carts and the fonts carry their own
 licenses.
 
 The panel driver isn't part of this repo. `npm install` fetches and builds it,

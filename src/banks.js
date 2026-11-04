@@ -1,6 +1,6 @@
 'use strict';
 
-// Where banks come from: every pack under a folder, or one hand-written bank
+// Where banks come from: every multicart and pack under a folder, or one hand-written bank
 // file. A bank is up to 16 pieces, one per key.
 
 const fs = require('fs');
@@ -91,16 +91,16 @@ function packsInCart(dir) {
 
 // One broken pack shouldn't take the others down with it, so its problem is
 // reported and the scan carries on.
-function scanPacks(packsDir, log = console.log) {
+function scanCarts(cartsDir, log = console.log) {
   const dirs = fs
-    .readdirSync(packsDir, { withFileTypes: true })
-    .filter((e) => !e.name.startsWith('.') && fs.statSync(path.join(packsDir, e.name)).isDirectory())
+    .readdirSync(cartsDir, { withFileTypes: true })
+    .filter((e) => !e.name.startsWith('.') && fs.statSync(path.join(cartsDir, e.name)).isDirectory())
     .map((e) => e.name)
     .sort((a, b) => (a === FIRST_PACK ? -1 : b === FIRST_PACK ? 1 : a.localeCompare(b)));
   const packs = [];
   for (const dir of dirs) {
     try {
-      const inCart = packsInCart(path.join(packsDir, dir));
+      const inCart = packsInCart(path.join(cartsDir, dir));
       packs.push(...(inCart ? inCart.map((name) => path.join(dir, name)) : [dir]));
     } catch (err) {
       log(`[player] skipping multicart '${dir}': ${err.message}`);
@@ -108,7 +108,7 @@ function scanPacks(packsDir, log = console.log) {
   }
   const banks = [];
   packs.forEach((dir, i) => {
-    const packDir = path.join(packsDir, dir);
+    const packDir = path.join(cartsDir, dir);
     try {
       const manifest = readManifest(packDir);
       const name = typeof manifest.name === 'string' && manifest.name.trim() ? manifest.name : path.basename(dir);
@@ -120,7 +120,7 @@ function scanPacks(packsDir, log = console.log) {
       log(`[player] skipping pack '${dir}': ${err.message}`);
     }
   });
-  if (!banks.length) throw new Error(`no pieces found in ${packsDir}`);
+  if (!banks.length) throw new Error(`no pieces found in ${cartsDir}`);
   return banks.map(fillBank);
 }
 
@@ -144,4 +144,4 @@ function loadBankFile(file) {
   }));
 }
 
-module.exports = { BANK_SIZE, scanPacks, loadBankFile };
+module.exports = { BANK_SIZE, scanCarts, loadBankFile };
