@@ -124,7 +124,8 @@ cd packs
 git clone <a pack's repo>
 ```
 
-Or unzip a download there. New packs appear the next time you change banks.
+Or unzip a download there. New packs appear the next time you change banks. A
+multicart is a repo of several packs, and it installs the same way.
 Pieces run in a sandbox with no access to your files or network, but a pack is
 still someone else's code, so get packs from people you trust.
 

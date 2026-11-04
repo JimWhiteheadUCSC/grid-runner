@@ -73,6 +73,22 @@ function fillBank(bank) {
   return { ...bank, pieces: Array.from({ length: BANK_SIZE }, (_, i) => bank.pieces[i] || null) };
 }
 
+// A multicart is a folder of packs, played in the order its cart.json lists
+// them. Returns the pack folders' names, or null if this folder isn't a
+// multicart. Like a pack's pieces, a multicart's packs must be inside it.
+function packsInCart(dir) {
+  const file = path.join(dir, 'cart.json');
+  if (!fs.existsSync(file)) return null;
+  const cart = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!cart || !Array.isArray(cart.packs)) throw new Error('cart.json must list its packs');
+  const realCart = fs.realpathSync(dir);
+  for (const name of cart.packs) {
+    if (typeof name !== 'string') throw new Error('cart.json packs must be folder names');
+    if (!fs.realpathSync(path.join(dir, name)).startsWith(realCart + path.sep)) throw new Error(`${name} is outside the multicart`);
+  }
+  return cart.packs;
+}
+
 // One broken pack shouldn't take the others down with it, so its problem is
 // reported and the scan carries on.
 function scanPacks(packsDir, log = console.log) {
@@ -81,12 +97,21 @@ function scanPacks(packsDir, log = console.log) {
     .filter((e) => !e.name.startsWith('.') && fs.statSync(path.join(packsDir, e.name)).isDirectory())
     .map((e) => e.name)
     .sort((a, b) => (a === FIRST_PACK ? -1 : b === FIRST_PACK ? 1 : a.localeCompare(b)));
+  const packs = [];
+  for (const dir of dirs) {
+    try {
+      const inCart = packsInCart(path.join(packsDir, dir));
+      packs.push(...(inCart ? inCart.map((name) => path.join(dir, name)) : [dir]));
+    } catch (err) {
+      log(`[player] skipping multicart '${dir}': ${err.message}`);
+    }
+  }
   const banks = [];
-  dirs.forEach((dir, i) => {
+  packs.forEach((dir, i) => {
     const packDir = path.join(packsDir, dir);
     try {
       const manifest = readManifest(packDir);
-      const name = typeof manifest.name === 'string' && manifest.name.trim() ? manifest.name : dir;
+      const name = typeof manifest.name === 'string' && manifest.name.trim() ? manifest.name : path.basename(dir);
       const color = isValidColor(manifest.color) ? manifest.color : PALETTE[i % PALETTE.length];
       const pieces = piecesIn(packDir, manifest);
       if (pieces.length) banks.push(...banksOf(name, color, pieces));

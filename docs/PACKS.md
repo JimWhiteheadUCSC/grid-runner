@@ -48,6 +48,28 @@ cd packs
 git clone <your repo>
 ```
 
+## Multicarts
+
+A multicart is one repository holding several packs. It installs like a pack,
+and each pack inside becomes its own bank or banks.
+
+```
+packs/my-multicart/
+  cart.json
+  first-pack/
+  second-pack/
+```
+
+`cart.json` lists the packs in the order they play, and any folder it doesn't
+list is left out:
+
+```json
+{
+  "name": "My Multicart",
+  "packs": ["first-pack", "second-pack"]
+}
+```
+
 ## Arranging your own banks
 
 Packs fill banks automatically. To choose exactly which piece goes on which key

@@ -118,6 +118,21 @@ test('packs: order, colours, bank splitting, and what counts as a piece', () => 
   assert.strictEqual(banks[3].pieces.filter(Boolean).length, 4);
 });
 
+test('a multicart plays its packs in order, and cannot reach outside itself', () => {
+  makePack('carts/cart/zebra', { 'z.js': piece('Z') }, { name: 'Zebra' });
+  makePack('carts/cart/alpha', { 'a.js': piece('A') });
+  makePack('carts/cart/unlisted', { 'u.js': piece('U') });
+  fs.writeFileSync(path.join(tmp, 'carts/cart/cart.json'), JSON.stringify({ name: 'Cart', packs: ['zebra', 'alpha'] }));
+  makePack('carts/escape', { 'cart.json': JSON.stringify({ packs: ['../cart/zebra'] }) });
+  makePack('carts/broken', { 'cart.json': '{ nope' });
+  makePack('carts/plain', { 'p.js': piece('P') });
+
+  const messages = [];
+  const banks = scanPacks(path.join(tmp, 'carts'), (m) => messages.push(m));
+  assert.deepStrictEqual(banks.map((b) => b.name), ['Zebra', 'alpha', 'plain']);
+  assert.strictEqual(messages.filter((m) => m.includes('skipping multicart')).length, 2);
+});
+
 test('a pack cannot reach outside itself, and a broken pack spares the others', () => {
   const dir = path.join(tmp, 'hostile');
   fs.writeFileSync(path.join(tmp, 'secret.js'), piece('Secret'));
